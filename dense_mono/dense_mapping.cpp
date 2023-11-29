@@ -63,7 +63,7 @@ bool readDatasetFiles(
  * @param depth_cov     深度方差
  * @return              是否成功
  */
-bool update(
+void update(
     const Mat &ref,
     const Mat &curr,
     const SE3d &T_C_R,
@@ -272,7 +272,7 @@ bool readDatasetFiles(
 }
 
 // 对整个深度图进行更新
-bool update(const Mat &ref, const Mat &curr, const SE3d &T_C_R, Mat &depth, Mat &depth_cov2) {
+void update(const Mat &ref, const Mat &curr, const SE3d &T_C_R, Mat &depth, Mat &depth_cov2) {
     for (int x = boarder; x < width - boarder; x++)
         for (int y = boarder; y < height - boarder; y++) {
             // 遍历每个像素
@@ -330,7 +330,7 @@ bool epipolarSearch(
     if (half_length > 100) half_length = 100;   // 我们不希望搜索太多东西
 
     // 取消此句注释以显示极线（线段）
-    showEpipolarLine( ref, curr, pt_ref, px_min_curr, px_max_curr );
+    //showEpipolarLine( ref, curr, pt_ref, px_min_curr, px_max_curr );
 
     // 在极线上搜索，以深度均值点为中心，左右各取半长度
     double best_ncc = -1.0;
@@ -410,13 +410,12 @@ bool updateDepthFilter(
     //    [ f_2^T f_ref, -f2^T f2      ] [d_cur] = [f2^T t   ]
     Vector3d t = T_R_C.translation();
     Vector3d f2 = T_R_C.so3() * f_curr;
-    
-    //Vector2d b = Vector2d(t.dot(f_ref), t.dot(f2));
-    Vector2d b = Vector2d(t.dot(f_ref), f2.dot(t));
+
+    Vector2d b = Vector2d(t.dot(f_ref), t.dot(f2));
     Matrix2d A;
     A(0, 0) = f_ref.dot(f_ref);
     A(0, 1) = -f_ref.dot(f2);
-    A(1, 0) = -f2.dot(f_ref);
+    A(1, 0) = -A(0,1);
     A(1, 1) = -f2.dot(f2);
     Vector2d ans = A.inverse() * b;
     Vector3d xm = ans[0] * f_ref;           // ref 侧的结果
