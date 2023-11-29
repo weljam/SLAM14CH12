@@ -34,7 +34,10 @@ int main(int argc, char **argv) {
         }
         Eigen::Quaterniond q(data[6], data[3], data[4], data[5]);
         Eigen::Isometry3d T(q);
+        cout<<T.matrix()<<endl;
+        //这里的平移量是发生旋转前的坐标系
         T.pretranslate(Eigen::Vector3d(data[0], data[1], data[2]));
+        cout<<T.matrix()<<endl;
         poses.push_back(T);
     }
 
@@ -79,12 +82,18 @@ int main(int argc, char **argv) {
                 p.r = color.data[v * color.step + u * color.channels() + 2];
                 current->points.push_back(p);
             }
-        // depth filter and statistical removal 
+        // 深度滤波器与离群值（噪点）去除
+        // 新建临时点云
         PointCloud::Ptr tmp(new PointCloud);
+        // 统计滤波器
         pcl::StatisticalOutlierRemoval<PointT> statistical_filter;
+        // 临近点个数设为50
         statistical_filter.setMeanK(50);
+        // 判断离群值阈值设为1
         statistical_filter.setStddevMulThresh(1.0);
+        // 导入当前点云
         statistical_filter.setInputCloud(current);
+        // 滤波结果保存到临时点云，并将临时点云存入总点云
         statistical_filter.filter(*tmp);
         (*pointCloud) += *tmp;
     }
